@@ -350,9 +350,13 @@ namespace ThemeExplorer.App
                 Margin = new Padding(0, 4, 0, 0)
             };
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 6; i++)
                 _properties.Columns.Add(string.Empty, 80);
 
+            _properties.OwnerDraw = true;
+            _properties.DrawColumnHeader += OnPropertyColumnHeader;
+            _properties.DrawItem += OnPropertyListItem;
+            _properties.DrawSubItem += OnPropertySubItem;
             _properties.Resize += OnPropertyListResize;
             _properties.KeyDown += OnPropertyListKeyDown;
 
@@ -399,6 +403,7 @@ namespace ThemeExplorer.App
             _properties.Columns[2].Text = Strings.ColumnProperty;
             _properties.Columns[3].Text = Strings.ColumnValue;
             _properties.Columns[4].Text = Strings.ColumnOrigin;
+            _properties.Columns[5].Text = Strings.ColumnPreview;
             _copySelectedItem.Text = Strings.MenuEditCopySelected;
             _copyAllItem.Text = Strings.MenuEditCopyAll;
 
@@ -648,6 +653,9 @@ namespace ThemeExplorer.App
                     item.SubItems.Add(property.Name);
                     item.SubItems.Add(hasValue ? PropertyValueFormatter.Format(value) : string.Empty);
                     item.SubItems.Add(GetOriginText(origin, hasValue));
+                    item.SubItems.Add(string.Empty);
+                    if (hasValue && value != null && value.Type == ThemePropertyType.Color)
+                        item.Tag = value.ColorValue;
                     _properties.Items.Add(item);
                 }
             }
@@ -783,8 +791,9 @@ namespace ThemeExplorer.App
 
         private static string FormatPropertyRow(ListViewItem item)
         {
-            var cells = new string[item.SubItems.Count];
-            for (int i = 0; i < item.SubItems.Count; i++)
+            int count = Math.Min(5, item.SubItems.Count);
+            var cells = new string[count];
+            for (int i = 0; i < count; i++)
                 cells[i] = item.SubItems[i].Text;
             return string.Join("\t", cells);
         }
@@ -794,25 +803,61 @@ namespace ThemeExplorer.App
             AdjustColumnWidths();
         }
 
+        private static void OnPropertyColumnHeader(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            e.DrawDefault = true;
+        }
+
+        private static void OnPropertyListItem(object sender, DrawListViewItemEventArgs e)
+        {
+            // Details view draws each cell in OnPropertySubItem.
+        }
+
+        private static void OnPropertySubItem(object sender, DrawListViewSubItemEventArgs e)
+        {
+            if (e.ColumnIndex != 5)
+            {
+                e.DrawDefault = true;
+                return;
+            }
+
+            e.DrawBackground();
+            if (!(e.Item.Tag is Color))
+                return;
+
+            var color = (Color)e.Item.Tag;
+            Rectangle bounds = e.Bounds;
+            bounds.Inflate(-4, -4);
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+                return;
+
+            using (var brush = new SolidBrush(color))
+                e.Graphics.FillRectangle(brush, bounds);
+            e.Graphics.DrawRectangle(SystemPens.ControlDark, bounds);
+        }
+
         private void AdjustColumnWidths()
         {
-            if (_properties == null || _properties.Columns.Count != 5)
+            if (_properties == null || _properties.Columns.Count != 6)
                 return;
 
             int width = _properties.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 4;
             if (width <= 0)
                 return;
 
+            const int previewWidth = 72;
+            int dataWidth = Math.Max(0, width - previewWidth);
             int[] percentages = { 13, 8, 33, 29, 17 };
-            int[] minimums = { 70, 45, 180, 130, 70 };
+            int[] minimums = { 60, 40, 150, 110, 60 };
 
             for (int i = 0; i < 5; i++)
             {
-                int columnWidth = width * percentages[i] / 100;
+                int columnWidth = dataWidth * percentages[i] / 100;
                 if (columnWidth < minimums[i])
                     columnWidth = minimums[i];
                 _properties.Columns[i].Width = columnWidth;
             }
+            _properties.Columns[5].Width = previewWidth;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -1027,8 +1072,9 @@ namespace ThemeExplorer.App
             for (int i = 0; i < count; i++)
             {
                 var cells = new List<string>();
-                foreach (ListViewItem.ListViewSubItem cell in _properties.Items[i].SubItems)
-                    cells.Add(cell.Text);
+                int subItemCount = Math.Min(5, _properties.Items[i].SubItems.Count);
+                for (int j = 0; j < subItemCount; j++)
+                    cells.Add(_properties.Items[i].SubItems[j].Text);
                 rows.Add(string.Join(" | ", cells.ToArray()));
             }
             return rows;

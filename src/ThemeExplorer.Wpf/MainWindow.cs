@@ -21,6 +21,8 @@ namespace ThemeExplorer.Wpf
         public string Property { get; set; }
         public string Value { get; set; }
         public string Origin { get; set; }
+        public Brush PreviewBrush { get; set; }
+        public Visibility PreviewVisibility { get; set; }
     }
 
     /// <summary>
@@ -345,9 +347,9 @@ namespace ThemeExplorer.Wpf
             };
 
             var view = new GridView();
-            _columns = new GridViewColumn[5];
+            _columns = new GridViewColumn[6];
             string[] members = { "Type", "Id", "Property", "Value", "Origin" };
-            for (int i = 0; i < _columns.Length; i++)
+            for (int i = 0; i < members.Length; i++)
             {
                 _columns[i] = new GridViewColumn
                 {
@@ -356,6 +358,26 @@ namespace ThemeExplorer.Wpf
                 };
                 view.Columns.Add(_columns[i]);
             }
+
+            var previewFactory = new FrameworkElementFactory(typeof(Border));
+            previewFactory.SetValue(Border.WidthProperty, 52.0);
+            previewFactory.SetValue(Border.HeightProperty, 14.0);
+            previewFactory.SetValue(Border.BorderBrushProperty, Brushes.Gray);
+            previewFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            previewFactory.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+            previewFactory.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            previewFactory.SetValue(FrameworkElement.MarginProperty, new Thickness(4, 2, 4, 2));
+            previewFactory.SetBinding(Border.BackgroundProperty, new Binding("PreviewBrush"));
+            previewFactory.SetBinding(UIElement.VisibilityProperty, new Binding("PreviewVisibility"));
+
+            var previewTemplate = new DataTemplate { VisualTree = previewFactory };
+            _columns[5] = new GridViewColumn
+            {
+                Width = 72,
+                Header = Strings.ColumnPreview,
+                CellTemplate = previewTemplate
+            };
+            view.Columns.Add(_columns[5]);
 
             _properties.View = view;
 
@@ -488,6 +510,7 @@ namespace ThemeExplorer.Wpf
             _columns[2].Header = Strings.ColumnProperty;
             _columns[3].Header = Strings.ColumnValue;
             _columns[4].Header = Strings.ColumnOrigin;
+            _columns[5].Header = Strings.ColumnPreview;
 
             _backgroundView.ToolTip = Strings.TooltipBackgroundBitmap;
             _glyphView.ToolTip = Strings.TooltipGlyphBitmap;
@@ -747,13 +770,26 @@ namespace ThemeExplorer.Wpf
                         continue;
                     }
 
+                    Brush previewBrush = null;
+                    Visibility previewVisibility = Visibility.Collapsed;
+                    if (hasValue && value != null && value.Type == ThemePropertyType.Color)
+                    {
+                        System.Drawing.Color color = value.ColorValue;
+                        var brush = new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
+                        brush.Freeze();
+                        previewBrush = brush;
+                        previewVisibility = Visibility.Visible;
+                    }
+
                     rows.Add(new PropertyRow
                     {
                         Type = PropertyValueFormatter.GetTypeName(property.Type),
                         Id = property.Id.ToString(CultureInfo.InvariantCulture),
                         Property = property.Name,
                         Value = hasValue ? PropertyValueFormatter.Format(value) : string.Empty,
-                        Origin = GetOriginText(origin, hasValue)
+                        Origin = GetOriginText(origin, hasValue),
+                        PreviewBrush = previewBrush,
+                        PreviewVisibility = previewVisibility
                     });
                 }
             }
@@ -803,16 +839,19 @@ namespace ThemeExplorer.Wpf
 
         private void AdjustColumnWidths()
         {
-            if (_properties == null || _columns == null || _columns.Length != 5)
+            if (_properties == null || _columns == null || _columns.Length != 6)
                 return;
 
             double width = _properties.ActualWidth - SystemParameters.VerticalScrollBarWidth - 20;
             if (width <= 0)
                 return;
 
+            const double previewWidth = 72;
+            double dataWidth = Math.Max(0, width - previewWidth);
             double[] percentages = { 13, 8, 32, 30, 17 };
-            for (int i = 0; i < _columns.Length; i++)
-                _columns[i].Width = Math.Max(60, width * percentages[i] / 100.0);
+            for (int i = 0; i < 5; i++)
+                _columns[i].Width = Math.Max(60, dataWidth * percentages[i] / 100.0);
+            _columns[5].Width = previewWidth;
         }
 
         // ------------------------------------------------------------------

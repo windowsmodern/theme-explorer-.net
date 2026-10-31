@@ -44,6 +44,7 @@ $strings = @(
     @{ Name = 'ColumnProperty';         En = 'Property';                                         Zh = '属性' }
     @{ Name = 'ColumnValue';            En = 'Value';                                            Zh = '值' }
     @{ Name = 'ColumnOrigin';           En = 'Origin';                                           Zh = '来源' }
+    @{ Name = 'ColumnPreview';          En = 'Preview';                                          Zh = '预览' }
     @{ Name = 'NoBitmap';               En = 'no bitmap';                                     Zh = '无位图' }
     @{ Name = 'StatusReady';            En = 'Ready';                                            Zh = '就绪' }
     @{ Name = 'StatusTheme';            En = 'Theme: {0}';                                       Zh = '主题：{0}' }

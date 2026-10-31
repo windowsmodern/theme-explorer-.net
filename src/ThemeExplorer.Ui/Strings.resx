@@ -91,6 +91,9 @@ Released under the MIT License.</value>
   <data name="ColumnOrigin" xml:space="preserve">
     <value>Origin</value>
   </data>
+  <data name="ColumnPreview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
   <data name="NoBitmap" xml:space="preserve">
     <value>no bitmap</value>
   </data>

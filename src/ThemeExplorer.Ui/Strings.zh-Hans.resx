@@ -91,6 +91,9 @@ C# 移植版本：.NET Framework 4.0 / C# 6，AnyCPU。
   <data name="ColumnOrigin" xml:space="preserve">
     <value>来源</value>
   </data>
+  <data name="ColumnPreview" xml:space="preserve">
+    <value>预览</value>
+  </data>
   <data name="NoBitmap" xml:space="preserve">
     <value>无位图</value>
   </data>

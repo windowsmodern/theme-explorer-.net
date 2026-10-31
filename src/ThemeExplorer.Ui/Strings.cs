@@ -41,6 +41,7 @@ namespace ThemeExplorer.Ui
         public static string ColumnProperty => Get("ColumnProperty");
         public static string ColumnValue => Get("ColumnValue");
         public static string ColumnOrigin => Get("ColumnOrigin");
+        public static string ColumnPreview => Get("ColumnPreview");
         public static string NoBitmap => Get("NoBitmap");
         public static string StatusReady => Get("StatusReady");
         public static string StatusTheme => Get("StatusTheme");
